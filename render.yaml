@@ -1,0 +1,27 @@
+# Render 一键部署配置
+# 使用方式：
+#   1. 将本项目推送到 GitHub
+#   2. 打开 https://dashboard.render.com  → New → Blueprint
+#   3. 选择本仓库，Render 会自动读取本文件创建服务
+#   4. 部署完成后会得到一个公网地址，如 https://video-watermark-remover.onrender.com
+#   5. 把该地址填入在线页面的 API 地址栏即可使用
+
+services:
+  - type: web
+    name: video-watermark-remover
+    runtime: python
+    plan: free
+    buildCommand: "pip install -e .[all]"
+    startCommand: "uvicorn parse_video_py.web:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: PARSE_VIDEO_TIMEOUT
+        value: "30"
+      # 如需代理（访问被墙平台），取消注释并填写
+      # - key: PARSE_VIDEO_PROXY
+      #   value: http://127.0.0.1:7890
+      # 如需开启 Basic Auth，取消注释并填写
+      # - key: PARSE_VIDEO_USERNAME
+      #   value: admin
+      # - key: PARSE_VIDEO_PASSWORD
+      #   value: change_me

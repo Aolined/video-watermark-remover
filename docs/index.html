@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>视频去水印解析工具</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+:root{--bg:#0b0e14;--bg2:#12161f;--card:#161b26;--line:#242b3a;--text:#e6e9f0;--dim:#8b93a7;--acc:#5b8cff;--acc2:#8ab4ff;--green:#3ddc97;--red:#ff6b6b;--yellow:#ffd166}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh}
+.wrap{max-width:980px;margin:0 auto;padding:28px 16px 80px}
+header{text-align:center;margin-bottom:26px}
+header h1{font-size:26px;font-weight:700;background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+header p{color:var(--dim);font-size:13px;margin-top:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+.chip{font-size:12px;color:var(--dim);border:1px solid var(--line);padding:4px 12px;border-radius:999px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+textarea{width:100%;min-height:96px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:12px;font-size:14px;font-family:inherit;resize:vertical;outline:none;line-height:1.7}
+textarea:focus{border-color:var(--acc)}
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--acc);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:600;transition:.2s}
+.btn:hover{filter:brightness(1.1)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.gray{background:var(--bg2);color:var(--dim);border:1px solid var(--line);font-weight:400}
+.btn.sm{padding:7px 14px;font-size:13px;border-radius:8px}
+.row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center}
+.msg{font-size:13px;color:var(--dim);margin-top:10px;min-height:18px}
+.msg.err{color:var(--red)}.msg.ok{color:var(--green)}
+.count{font-size:13px;color:var(--dim);margin-top:8px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-top:14px;overflow:hidden}
+.item .hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tag{background:rgba(91,140,255,.15);color:var(--acc2);border:1px solid rgba(91,140,255,.35);font-size:12px;padding:3px 10px;border-radius:999px;font-weight:600}
+.item .tt{font-size:14px;font-weight:600;flex:1;min-width:160px}
+.item .au{font-size:12px;color:var(--dim)}
+.item .bd{padding:16px}
+.errbox{background:var(--card);border:1px solid rgba(255,107,107,.35);border-radius:14px;margin-top:14px;padding:14px 16px;font-size:13px;color:var(--red)}
+.videobox{position:relative;border-radius:10px;overflow:hidden;background:#000;margin-bottom:12px}
+.videobox video{width:100%;max-height:400px;display:block;background:#000}
+.imggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:12px}
+.imggrid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;cursor:pointer}
+.links{margin-top:12px}.links .urlbox{font-size:12px;color:var(--dim);background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;word-break:break-all;margin-top:8px}
+footer{text-align:center;color:var(--dim);font-size:12px;margin-top:40px;line-height:1.8}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+#apiBar{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#apiBar label{font-size:13px;color:var(--dim);white-space:nowrap}
+#apiBar input{flex:1;min-width:180px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;font-family:inherit;outline:none}
+#apiBar input:focus{border-color:var(--acc)}
+.apiStatus{font-size:12px;padding:4px 10px;border-radius:999px}
+.apiStatus.ok{background:rgba(61,220,151,.15);color:var(--green);border:1px solid rgba(61,220,151,.3)}
+.apiStatus.off{background:rgba(255,107,107,.15);color:var(--red);border:1px solid rgba(255,107,107,.3)}
+.apiStatus.unk{background:rgba(139,147,167,.15);color:var(--dim);border:1px solid var(--line)}
+@media(max-width:640px){header h1{font-size:21px}#apiBar input{min-width:120px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>🎬 视频去水印解析工具</h1>
+<p>支持 27 个平台 · 粘贴分享链接即可解析无水印直链</p>
+<div class="chips" id="chips"></div>
+</header>
+<div id="apiBar">
+  <label>🔗 API 地址</label>
+  <input type="url" id="apiInput" placeholder="http://127.0.0.1:8000" value="http://127.0.0.1:8000">
+  <button class="btn sm gray" id="testApi">测试连接</button>
+  <span class="apiStatus unk" id="apiStatus">未连接</span>
+  <button class="btn sm" id="saveApi" style="display:none">保存</button>
+</div>
+<div class="card">
+  <textarea id="input" placeholder="粘贴分享链接，支持多行批量&#10;例如：https://v.douyin.com/xxxx/ 或 https://xhslink.com/xxxx"></textarea>
+  <div class="row">
+    <button class="btn" id="btnParse">⚡ 开始解析</button>
+    <button class="btn gray" id="btnClear">清空</button>
+    <span id="loading" style="display:none" class="spinner"></span>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="msg" id="msg"></div>
+</div>
+<div id="results"></div>
+<footer>
+  本地运行：<code>start.bat</code> &nbsp;|&nbsp; 部署到云端：<code>render.yaml</code><br>
+  仅用于解析公开分享内容 · 请遵守各平台使用条款
+</footer>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const input = $("#input"), results = $("#results"), msg = $("#msg");
+const countEl = $("#count"), btn = $("#btnParse"), apiInput = $("#apiInput");
+const apiStatus = $("#apiStatus"), testBtn = $("#testApi"), saveBtn = $("#saveApi");
+
+const PLATFORMS = ["抖音","快手","B站","小红书","微博","西瓜视频","微视","虎牙","AcFun","腾讯视频","搜狐","央视网","皮皮虾","梨视频","好看视频","最右","度小视","绿洲","美拍","全民K歌","TikTok","Instagram","Twitter/X","皮皮搞笑","逗拍","六间房","新片场"];
+const chips = $("#chips");
+PLATFORMS.forEach(p => { const el = document.createElement("div"); el.className = "chip"; el.textContent = p; chips.appendChild(el); });
+
+// API URL management
+let apiBase = localStorage.getItem("vdw_api") || "http://127.0.0.1:8000";
+apiInput.value = apiBase;
+if (localStorage.getItem("vdw_api")) { saveBtn.style.display = "inline-flex"; }
+
+apiInput.addEventListener("input", () => {
+  saveBtn.style.display = "inline-flex";
+  apiStatus.className = "apiStatus unk"; apiStatus.textContent = "未保存";
+});
+saveBtn.addEventListener("click", () => {
+  apiBase = apiInput.value.replace(/\/+$/, "");
+  localStorage.setItem("vdw_api", apiBase);
+  saveBtn.style.display = "none";
+  apiStatus.className = "apiStatus unk"; apiStatus.textContent = "已保存，待测试";
+  testConnection();
+});
+// Load saved API on page load
+if (localStorage.getItem("vdw_api")) { setTimeout(testConnection, 500); }
+
+async function testConnection() {
+  apiBase = apiInput.value.replace(/\/+$/, "");
+  apiStatus.className = "apiStatus unk"; apiStatus.textContent = "检测中…";
+  try {
+    const r = await fetch(apiBase + "/health");
+    const j = await r.json();
+    if (j.code === 200) {
+      apiStatus.className = "apiStatus ok"; apiStatus.textContent = "✅ 已连接";
+      localStorage.setItem("vdw_api", apiBase);
+      apiInput.value = apiBase;
+    } else {
+      apiStatus.className = "apiStatus off"; apiStatus.textContent = "❌ 响应异常";
+    }
+  } catch (e) {
+    apiStatus.className = "apiStatus off"; apiStatus.textContent = "❌ 无法连接";
+  }
+}
+testBtn.addEventListener("click", testConnection);
+
+const PLATFORM_REFERER = { douyin: "https://www.douyin.com/", kuaishou: "https://www.kuaishou.com/", bilibili: "https://www.bilibili.com/", xigua: "https://www.ixigua.com/", xiaohongshu: "https://www.xiaohongshu.com/", weibo: "https://weibo.com/", tiktok: "https://www.tiktok.com/", instagram: "https://www.instagram.com/" };
+function refererFor(u) { for (const k in PLATFORM_REFERER) { if ((u||"").includes(k)) return PLATFORM_REFERER[k]; } return ""; }
+function safeTitle(t) { return (t||"video").replace(/[\\/:*?"<>|#%\s]+/g,"_").replace(/_+/g,"_").slice(0,80)||"video"; }
+function downloadUrl(u, filename) { const a=document.createElement("a"); a.href=u; a.download=filename||""; a.target="_blank"; document.body.appendChild(a); a.click(); a.remove(); }
+function extFromUrl(u) { const p=(u.split("?")[0]||"").toLowerCase(); const m=p.match(/\.(mp4|webm|jpg|jpeg|png|gif|webp|mov|m3u8)$/); return m?m[1]:null; }
+function showMsg(text, cls) { msg.textContent=text; msg.className="msg"+(cls?" "+cls:""); }
+function escapeHtml(s) { return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+btn.addEventListener("click", runParse);
+input.addEventListener("keydown", e => { if ((e.ctrlKey||e.metaKey)&&e.key==="Enter") runParse(); });
+$("#btnClear").addEventListener("click", () => { input.value=""; results.innerHTML=""; countEl.textContent=""; showMsg(""); });
+
+async function runParse() {
+  const text = input.value.trim();
+  if (!text) { showMsg("请先粘贴分享链接","err"); return; }
+  if (!apiBase) { showMsg("请先配置 API 地址","err"); return; }
+  showMsg("正在解析…","");
+  btn.disabled = true; $("#loading").style.display = "inline-block";
+  results.innerHTML = "";
+  try {
+    const r = await fetch(apiBase + "/video/share/url/parse/batch", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ text: text })
+    });
+    const j = await r.json();
+    if (j.code !== 200) { showMsg("解析失败：" + j.msg, "err"); return; }
+    const d = j.data;
+    countEl.textContent = `共 ${d.total} 条 · 成功 ${d.success} · 失败 ${d.failed}`;
+    showMsg(d.success>0 ? "解析完成" : "全部解析失败，请检查链接", d.success>0?"ok":"err");
+    renderResults(d.results);
+  } catch (e) {
+    showMsg("请求失败：" + e.message + " — 请确认 API 地址已配置且可访问","err");
+  } finally {
+    btn.disabled = false; $("#loading").style.display = "none";
+  }
+}
+
+function renderResults(list) {
+  results.innerHTML = "";
+  list.forEach(item => {
+    if (!item.ok) {
+      const d = document.createElement("div");
+      d.className = "errbox";
+      d.innerHTML = `<b>❌ ${escapeHtml(item.raw||"")}</b><br><span style="color:var(--dim)">${escapeHtml(item.msg||"解析失败")}</span>`;
+      results.appendChild(d);
+      return;
+    }
+    results.appendChild(renderItem(item));
+  });
+}
+
+function detectPlatformName(u) {
+  const rules=[["douyin","抖音"],["kuaishou","快手"],["bilibili","B站"],["xigua","西瓜视频"],["xiaohongshu","小红书"],["weibo","微博"],["tiktok","TikTok"],["instagram","Instagram"],["pearvideo","梨视频"],["pipix","皮皮虾"],["huya","虎牙"],["v.qq.com","腾讯视频"],["sohu","搜狐"],["acfun","AcFun"],["kg.qq.com","全民K歌"],["haokan","好看视频"]];
+  for (const [k,n] of rules) { if ((u||"").includes(k)) return n; }
+  return "视频";
+}
+
+function renderItem(item) {
+  const d = item.data||{};
+  const el = document.createElement("div");
+  el.className = "item";
+  const platform = detectPlatformName(item.raw);
+  const author = d.author||{};
+  const hasVideo = !!d.video_url;
+  const hasImages = d.images&&d.images.length>0;
+  const hasMusic = !!d.music_url;
+  let body = "";
+  if (hasVideo) body += `<div class="videobox"><video controls preload="metadata" src="${escapeHtml(d.video_url)}"></video></div>`;
+  if (hasImages) {
+    body += `<div class="imggrid">`;
+    d.images.forEach(img => { body += `<img loading="lazy" src="${escapeHtml(img.url)}" onclick="window.open('${escapeHtml(img.url)}','_blank')">`; });
+    body += `</div>`;
+  }
+  el.innerHTML = `
+    <div class="hd">
+      <span class="tag">${platform}</span>
+      <div class="tt">${escapeHtml(d.title||"(无标题)")}</div>
+      <div class="au">${author.name?escapeHtml(author.name):""}</div>
+    </div>
+    <div class="bd">
+      ${body}
+      <div class="row">
+        ${hasVideo?`<button class="btn sm" data-action="dl-video">⬇ 下载视频</button>`:""}
+        ${hasImages?`<button class="btn sm gray" data-action="dl-images">🖼 下载图片</button>`:""}
+        ${hasMusic?`<button class="btn sm gray" data-action="dl-music">🎵 音乐</button>`:""}
+      </div>
+      <div class="links"><div class="urlbox">无水印直链：<br><span style="color:var(--acc2)">${escapeHtml(d.video_url||(d.images&&d.images[0]&&d.images[0].url)||"")}</span></div></div>
+    </div>`;
+  const ref = refererFor(item.raw||d.video_url||"");
+  el.querySelector('[data-action="dl-video"]')?.addEventListener("click", () => dlProxy(d.video_url, safeTitle(d.title)+".mp4", ref));
+  el.querySelector('[data-action="dl-music"]')?.addEventListener("click", () => dlProxy(d.music_url, safeTitle(d.title)+"_music.mp3", ref));
+  el.querySelector('[data-action="dl-images"]')?.addEventListener("click", () => dlImages(d));
+  return el;
+}
+function dlProxy(url, filename, referer) {
+  if (!url) return;
+  showMsg("正在下载…","");
+  const dl = apiBase + `/video/download/direct?url=${encodeURIComponent(url)}&referer=${encodeURIComponent(referer||"")}`;
+  downloadUrl(dl, filename);
+  setTimeout(()=>showMsg("已开始下载，若浏览器拦截请查看下载列表","ok"),800);
+}
+
+async function dlImages(d) {
+  const imgs = d.images||[];
+  if (!imgs.length) { showMsg("无图片可下载","err"); return; }
+  showMsg(`正在下载 ${imgs.length} 张图片…`,"");
+  try {
+    const results = await Promise.allSettled(imgs.map(img =>
+      fetch(apiBase + `/video/download/direct?url=${encodeURIComponent(img.url)}&referer=${encodeURIComponent("https://www.xiaohongshu.com/")}`)
+        .then(async r => {
+          const buf = await r.arrayBuffer();
+          return { buf, ext: extFromUrl(img.url)||"jpg" };
+        })
+    ));
+    const ok = results.filter(r=>r.status==="fulfilled");
+    if (!ok.length) { showMsg("下载失败，请检查网络","err"); return; }
+    // 逐个保存（多文件）
+    for (let i=0; i<ok.length; i++) {
+      const blob = new Blob([ok[i].value.buf]);
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `image_${String(i+1).padStart(3,"0")}.${ok[i].value.ext}`;
+      document.body.appendChild(a); a.click(); a.remove();
+      await new Promise(r=>setTimeout(r,300));
+    }
+    showMsg(`已开始下载 ${ok.length} 张图片`,"ok");
+  } catch(e) {
+    showMsg("下载失败："+e.message,"err");
+  }
+}
+</script>
+</body>
+</html>

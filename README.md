@@ -1,15 +1,37 @@
-# 视频去水印解析服务 (video-watermark-remover)
+# 🎬 视频去水印解析服务 (video-watermark-remover)
 
-> 基于 [parse-video-py](https://github.com/wujunwei928/parse-video-py)（MIT License）二次开发，
-> 借鉴 [video_spider](https://github.com/5ime/video_spider) 的多平台思路。
+| 项目 | 地址 |
+|------|------|
+| **在线页面** | [https://aolined.github.io/video-watermark-remover/](https://aolined.github.io/video-watermark-remover/) |
+| **仓库** | [https://github.com/Aolined/video-watermark-remover](https://github.com/Aolined/video-watermark-remover) |
+| **本地目录** | `D:\文档\ChatGPT\My 网站\video-watermark-remover` |
 
-支持 **30+ 平台** 短视频/图集解析去水印：抖音、快手、B站、小红书、微博、西瓜视频、
+> 基于 [parse-video-py](https://github.com/wujunwei928/parse-video-py)（MIT License）二次开发。
+
+支持 **27 个平台** 短视频/图集去水印解析：抖音、快手、B站、小红书、微博、西瓜视频、
 微视、最右、虎牙、AcFun、腾讯视频、搜狐、央视网、皮皮虾、梨视频、好看视频、
 度小视、全民K歌、TikTok、Instagram 等。
 
 ---
 
-## ✨ 二改新增功能
+## 🏗 架构
+
+```
+┌─────────────────────┐        ┌──────────────────────────┐
+│  在线页面 (GitHub Pages)  │  HTTP │  后端解析 API (FastAPI)      │
+│  docs/index.html      │ ─────▶ │  27 平台去水印解析器            │
+│  纯静态，可配置 API 地址    │        │  /video/share/url/parse/batch│
+└─────────────────────┘        └──────────────────────────┘
+   https://aolined.github.io/     本地: 127.0.0.1:8000
+   video-watermark-remover/       云端: Render / VPS
+```
+
+去水印解析逻辑必须运行在后端（各平台接口有反爬与签名校验），GitHub Pages 仅托管前端页面。
+**在线页面通过"API 地址"设置连接到你的后端服务。**
+
+---
+
+## ✨ 功能
 
 | 功能 | 说明 |
 |------|------|
@@ -18,26 +40,36 @@
 | 🆕 **批量解析 API** | `POST /video/share/url/parse/batch`，一次解析多链接或整段分享文本 |
 | 🆕 **代理下载端点** | `GET /video/download/direct`，后端转发下载，解决跨域/Referer 防盗链 |
 | 🆕 **平台列表 API** | `GET /platforms` 返回支持的全部平台与域名 |
-| 🆕 **现代化 Web UI** | 深色主题、平台徽章、批量解析、视频预览、图集打包 |
-| 🆕 **配置化** | `.env` 支持代理、超时、Basic Auth（`PARSE_VIDEO_PROXY` / `PARSE_VIDEO_TIMEOUT`） |
+| 🆕 **现代化 Web UI** | 深色主题、平台徽章、批量解析、视频预览、图集下载 |
+| 🆕 **配置化** | `.env` 支持代理、超时、Basic Auth |
+| 🆕 **在线静态页面** | `docs/index.html`，GitHub Pages 托管，可配置任意后端 API |
 | 🆕 **Windows 一键启动** | `start.bat` 自动建 venv + 装依赖 + 启动 |
 
 ---
 
-## 🚀 快速开始
+## 🚀 使用方式
 
-### Windows
-```bat
-start.bat
-```
-访问 http://127.0.0.1:8000
+### 方式一：在线页面（需要后端）
 
-### 手动
+1. **本地后端**（本机运行）：
+   ```bat
+   start.bat
+   ```
+   然后打开在线页面，把 API 地址设为 `http://127.0.0.1:8000`（本地直连可用）
+   或公网映射（ngrok / cpolar）后的地址。
+
+2. **云端后端**（公网可用，推荐）：
+   - 打开 [dashboard.render.com](https://dashboard.render.com) → New → Blueprint
+   - 选择本仓库，Render 自动读取 `render.yaml` 部署
+   - 部署完成后复制公网地址填入在线页面 API 设置即可，无需再开本机。
+
+### 方式二：纯本地
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e ".[all]"
-python main.py                    # http://127.0.0.1:8000
+python main.py                    # 打开 http://127.0.0.1:8000
 ```
 
 ### CLI
@@ -52,7 +84,7 @@ parse-video-py parse "https://v.douyin.com/xxx" --format json
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/` | Web 界面 |
+| GET | `/` | Web 界面（后端自带） |
 | GET | `/video/share/url/parse?url=...` | 单条链接解析 |
 | POST | `/video/share/url/parse/batch` | 批量解析，`{"urls":[...]}` 或 `{"text":"分享文本"}` |
 | GET | `/video/id/parse?source=douyin&video_id=...` | 按平台+ID 解析 |
@@ -68,11 +100,6 @@ curl -X POST http://127.0.0.1:8000/video/share/url/parse/batch \
   -d '{"text":"8.88 复制打开抖音 https://v.douyin.com/xxxx/ 看看这个视频"}'
 ```
 
-响应：
-```json
-{"code":200,"msg":"ok","data":{"total":1,"success":1,"failed":0,"results":[{"raw":"https://v.douyin.com/xxxx/","ok":true,"data":{"video_url":"...","title":"...","author":{"name":"..."}}}]}}
-```
-
 ---
 
 ## ⚙️ 配置（.env 或环境变量）
@@ -83,11 +110,14 @@ curl -X POST http://127.0.0.1:8000/video/share/url/parse/batch \
 | `PARSE_VIDEO_PROXY` | 代理地址（访问被墙平台时使用） |
 | `PARSE_VIDEO_TIMEOUT` | 请求超时秒数，默认 30 |
 
-复制 `.env.example` 为 `.env` 并按需修改（Web 服务读取环境变量）。
-
 ---
 
-## 📦 Docker
+## 📦 部署
+
+### Render（免费，推荐）
+仓库根目录已含 `render.yaml`，Render 一键 Blueprint 部署。
+
+### Docker
 ```bash
 docker build -t video-watermark-remover .
 docker run -p 8000:8000 video-watermark-remover
