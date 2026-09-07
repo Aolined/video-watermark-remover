@@ -14,7 +14,8 @@ class BiliBili(BaseParser):
     # 未设置环境变量时使用的匿名标识 Cookie（buvid3），
     # 可显著降低服务器 IP 被 B 站风控（HTTP 412）的概率。
     _DEFAULT_COOKIE = (
-        "buvid3=DDD3B27C-DFE2-A6AA-EBEF-642C42CB90DB24345infoc; "
+        "buvid3=98A331A0-D77A-C648-57DA-A4555E4374F896638infoc; "
+        "buvid4=9EDCD783-72EA-2D73-8B63-2A6072A1794396638-026090721-MG0zd5JPGFqk5pomiYtw9g==; "
         "b_nut=1788786624"
     )
 
