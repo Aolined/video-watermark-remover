@@ -33,10 +33,13 @@ class KuaiShou(BaseParser):
         location_url = location_url.replace("/fw/long-video/", "/fw/photo/")
 
         async with create_async_client(follow_redirects=True) as client:
+            # 仅携带基础 UA/Referer 请求落地页，避免透传 302 响应头触发快手风控
             response = await client.get(
                 location_url,
-                headers=share_response.headers,
-                cookies=share_response.cookies,
+                headers={
+                    "User-Agent": user_agent,
+                    "Referer": "https://www.kuaishou.com/",
+                },
             )
 
         re_pattern = r"window.INIT_STATE\s*=\s*(.*?)</script>"
