@@ -65,6 +65,9 @@ class QQVideo(BaseParser):
 
         # 构造视频播放地址
         video_url = f"{base_url}{fn}?vkey={fvkey}"
+        # 腾讯 CDN 有时返回数字 IP 直链（如 http://43.159.77.29/om.tc.qq.com/...），
+        # 下载代理按域名后缀白名单校验，需把 IP host 重写为路径中的 CDN 域名。
+        video_url = self._normalize_cdn_host(video_url)
 
         # 提取视频元信息
         vid = vi.get("vid", "")
@@ -76,6 +79,21 @@ class QQVideo(BaseParser):
             cover_url=cover_url,
             title=title,
         )
+
+    def _normalize_cdn_host(self, url: str) -> str:
+        """腾讯 CDN 返回的数字 IP 直链，重写为路径中的 CDN 域名以匹配下载白名单。"""
+        parsed = urlparse(url)
+        host = parsed.hostname or ""
+        if not host or not host.replace(".", "").isdigit():
+            return url  # 非纯数字 IP 无需处理
+        parts = parsed.path.lstrip("/").split("/")
+        if not parts or "." not in parts[0]:
+            return url
+        # http://<ip>/om.tc.qq.com/xxx/... -> http://om.tc.qq.com/xxx/...
+        new_host = parts[0]
+        new_path = "/" + "/".join(parts[1:]) if len(parts) > 1 else "/"
+        return parsed._replace(netloc=new_host, path=new_path).geturl()
+
 
     def _extract_vid(self, raw_url: str) -> str:
         """从 URL 中提取腾讯视频 ID"""
