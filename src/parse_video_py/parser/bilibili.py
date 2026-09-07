@@ -1,4 +1,5 @@
 import json
+import os
 from urllib.parse import urlparse
 
 from ..utils import create_async_client
@@ -10,8 +11,17 @@ class BiliBili(BaseParser):
     哔哩哔哩
     """
 
-    # 添加Cookie可以爬取更高清的视频，记得要把下面请求里的Cookie的注释也去掉
-    # BILI_COOKIE = "_uuid=; buvid_fp=; buvid4=; SESSDATA=; bili_jct=; DedeUserID=;"
+    # 未设置环境变量时使用的匿名标识 Cookie（buvid3），
+    # 可显著降低服务器 IP 被 B 站风控（HTTP 412）的概率。
+    _DEFAULT_COOKIE = (
+        "buvid3=DDD3B27C-DFE2-A6AA-EBEF-642C42CB90DB24345infoc; "
+        "b_nut=1788786624"
+    )
+
+    @staticmethod
+    def _cookie() -> str:
+        """读取环境变量 PARSE_VIDEO_BILI_COOKIE，未设置则退回匿名 Cookie。"""
+        return os.getenv("PARSE_VIDEO_BILI_COOKIE", "").strip() or BiliBili._DEFAULT_COOKIE
 
     USER_AGENT = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -22,9 +32,8 @@ class BiliBili(BaseParser):
         headers = {
             "User-Agent": self.USER_AGENT,
             "Referer": "https://www.bilibili.com/",
+            "Cookie": self._cookie(),
         }
-        # 如需爬取更高清的视频请取消这里的注释
-        # headers["Cookie"] = self.BILI_COOKIE
         return headers
 
     async def parse_share_url(self, share_url: str) -> VideoInfo:
