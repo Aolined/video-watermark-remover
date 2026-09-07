@@ -46,6 +46,8 @@ DEFAULT_DOWNLOAD_HOST_SUFFIXES = frozenset(
         "kwaicdn.com",
         "kwimgs.com",
         "yximgs.com",
+        "oskwai.com",
+        "gifshow.com",
         # B站
         "bilibili.com",
         "b23.tv",
