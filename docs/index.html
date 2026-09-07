@@ -62,7 +62,7 @@ footer{text-align:center;color:var(--dim);font-size:12px;margin-top:40px;line-he
 </header>
 <div id="apiBar">
   <label>🔗 API 地址</label>
-  <input type="url" id="apiInput" placeholder="http://127.0.0.1:8000" value="http://127.0.0.1:8000">
+  <input type="url" id="apiInput" placeholder="https://video-watermark-remover-ycdw.onrender.com" value="https://video-watermark-remover-ycdw.onrender.com">
   <button class="btn sm gray" id="testApi">测试连接</button>
   <span class="apiStatus unk" id="apiStatus">未连接</span>
   <button class="btn sm" id="saveApi" style="display:none">保存</button>
@@ -94,7 +94,7 @@ const chips = $("#chips");
 PLATFORMS.forEach(p => { const el = document.createElement("div"); el.className = "chip"; el.textContent = p; chips.appendChild(el); });
 
 // API URL management
-let apiBase = localStorage.getItem("vdw_api") || "http://127.0.0.1:8000";
+let apiBase = localStorage.getItem("vdw_api") || "https://video-watermark-remover-ycdw.onrender.com";
 apiInput.value = apiBase;
 if (localStorage.getItem("vdw_api")) { saveBtn.style.display = "inline-flex"; }
 
